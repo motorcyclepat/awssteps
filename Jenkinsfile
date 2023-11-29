@@ -6,7 +6,9 @@ pipeline {
        * "$FOO_USR" will contain string for Username
        * "$FOO_PSW" will contain string for Password
        */
-      FOO = credentials("FOOcredentials")
+      Dev = credentials("DevCredentials")
+      QA = credentials("QACredentials")
+      Prod - credentials("ProdCredentials")
     }
     agent any
 
@@ -33,7 +35,7 @@ pipeline {
           body: """<p>SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</p>
             <p>Check console output at &QUOT;<a href='${env.BUILD_URL}'>${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>&QUOT;</p>""",
           to: "${emailRecipient}",
-          from: "buildNotifications@emailaddress.com"
+          from: "motorcyclepat@gmail.com"
         )
     }
 
@@ -44,7 +46,7 @@ pipeline {
           body: """<p>FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</p>
             <p>Check console output at &QUOT;<a href='${env.BUILD_URL}'>${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>&QUOT;</p>""",
           to: "${emailRecipient}",
-          from: "buildNotifications@emailaddress.com"
+          from: "motorcyclepat@gmail.com"
         )
     }
   }
