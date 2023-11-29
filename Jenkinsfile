@@ -8,7 +8,7 @@ pipeline {
        */
       Dev = credentials("DevCredentials")
       QA = credentials("QACredentials")
-      Prod - credentials("ProdCredentials")
+      Prod = credentials("ProdCredentials")
     }
     agent any
 
