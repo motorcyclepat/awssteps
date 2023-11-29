@@ -1,4 +1,13 @@
 pipeline {
+        environment {
+      /*
+       * Uses a Jenkins credential called "FOOCredentials" and creates environment variables:
+       * "$FOO" will contain string "USR:PSW"
+       * "$FOO_USR" will contain string for Username
+       * "$FOO_PSW" will contain string for Password
+       */
+      FOO = credentials("FOOcredentials")
+    }
     agent any
 
     stages {
