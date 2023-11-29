@@ -1,53 +1,35 @@
 pipeline {
-        environment {
-      /*
-       * Uses a Jenkins credential called "FOOCredentials" and creates environment variables:
-       * "$FOO" will contain string "USR:PSW"
-       * "$FOO_USR" will contain string for Username
-       * "$FOO_PSW" will contain string for Password
-       */
-      DEV = credentials("DevCredentials")
-      QA = credentials("QACredentials")
-      PROD = credentials("ProdCredentials")
-    }
     agent any
+
+    environment {
+        AWS_DEFAULT_REGION = 'your-region' // Replace with your AWS region
+        STACK_NAME = 'your-stack-name'     // Replace with your CloudFormation stack name
+        PARAMETERS_FILE = 'path/to/your/updated-parameters.json' // Replace with the path to your updated CloudFormation parameters file
+    }
 
     stages {
         stage('Checkout') {
             steps {
-              git credentialsId: "${github_creds}", url: "${github_repo}"
+                checkout scm
             }
         }
-        stage('Build') {
+
+        stage('Update Stack Parameters') {
             steps {
-                sh 'mvn -B -DskipTests clean package'
+                script {
+                    // Update CloudFormation stack parameters
+                    sh "aws cloudformation update-stack --stack-name ${STACK_NAME} --use-previous-template --parameters file://${PARAMETERS_FILE}"
+
+                    // Wait for the stack update to complete
+                    sh "aws cloudformation wait stack-update-complete --stack-name ${STACK_NAME}"
+                }
             }
         }
     }
 
     post {
-
-    // Email Ext plugin:
-    success {
-
-      emailext (
-          subject: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
-          body: """<p>SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</p>
-            <p>Check console output at &QUOT;<a href='${env.BUILD_URL}'>${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>&QUOT;</p>""",
-          to: "motorcyclepat@gmail.com",
-          from: "motorcyclepat@gmail.com"
-        )
+        always {
+            // Cleanup or perform any other post-build tasks
+        }
     }
-
-    failure {
-
-      emailext (
-          subject: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
-          body: """<p>FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</p>
-            <p>Check console output at &QUOT;<a href='${env.BUILD_URL}'>${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>&QUOT;</p>""",
-          to: "motorcyclepat@gmail.com",
-          from: "motorcyclepat@gmail.com"
-        )
-    }
-  }
 }
