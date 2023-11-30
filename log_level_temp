@@ -1,0 +1,67 @@
+pipeline {
+    agent any
+
+    environment {
+        AWS_DEFAULT_REGION = 'your-region' // Replace with your AWS region
+        STACK_NAME = 'your-stack-name'     // Replace with your CloudFormation stack name
+        TEMPLATE_FILE = 'path/to/your/template.yaml' // Replace with the path to your CloudFormation template
+        LOGGING_LEVEL = 'INFO' // Replace with the desired logging level
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Create Stack') {
+            steps {
+                script {
+                    // Create CloudFormation stack
+                    sh "aws cloudformation create-stack --stack-name ${STACK_NAME} --template-body file://${TEMPLATE_FILE}"
+                    
+                    // Wait for the stack creation to complete
+                    sh "aws cloudformation wait stack-create-complete --stack-name ${STACK_NAME}"
+                }
+            }
+        }
+
+        stage('Change Logging Level') {
+            steps {
+                script {
+                    // Change CloudFormation logging level
+                    sh "aws cloudformation update-stack --stack-name ${STACK_NAME} --use-previous-template --parameters ParameterKey=LogLevel,ParameterValue=${LOGGING_LEVEL}"
+                    
+                    // Wait for the stack update to complete
+                    sh "aws cloudformation wait stack-update-complete --stack-name ${STACK_NAME}"
+                }
+            }
+        }
+
+        stage('Wait for 5 Minutes') {
+            steps {
+                // Sleep for 5 minutes
+                sleep time: 300, unit: 'SECONDS'
+            }
+        }
+
+        stage('Revert Logging Level') {
+            steps {
+                script {
+                    // Revert CloudFormation logging level
+                    sh "aws cloudformation update-stack --stack-name ${STACK_NAME} --use-previous-template --parameters ParameterKey=LogLevel,UsePreviousValue=true"
+                    
+                    // Wait for the stack update to complete
+                    sh "aws cloudformation wait stack-update-complete --stack-name ${STACK_NAME}"
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            // Cleanup or perform any other post-build tasks
+        }
+    }
+}
